@@ -1,38 +1,36 @@
-FROM xsede/centos-nix-base:latest
+FROM centos:7
 
 ################## METADATA ######################
 
-LABEL base_image="xsede/centos-nix-base"
+LABEL base_image="centos:7"
 LABEL version="1.0.0"
-LABEL software="Python"
-LABEL software.version="3.8.8"
-LABEL about.summary="Python 3.8.8 installed via Nix on top of CentOS 7"
-LABEL about.home="https://github.com/XSEDE/nix-container-python"
-LABEL about.documentation="https://github.com/XSEDE/nix-container-python"
-LABEL about.license_file="https://github.com/XSEDE/nix-container-python"
+LABEL software="Matlab"
+LABEL software.version="R2018a"
+LABEL about.summary="Matlab R2018a installed on top of CentOS 7"
+LABEL about.home="https://github.com/XSEDE/centos-container-matlab"
+LABEL about.documentation="https://github.com/XSEDE/centos-container-matlab"
+LABEL about.license_file="https://github.com/XSEDE/centos-container-matlab"
 LABEL about.license="MIT"
 LABEL about.tags="example-container" 
-LABEL extra.binaries="python"
+LABEL extra.binaries="matlab"
 LABEL authors="XCRI <help@xsede.org>"
 
 ################## ENVIRONMENT ######################
 
-SHELL ["/bin/bash", "-c"]
+RUN mkdir /opt/mcr && \
+yum install wget unzip libXmu -y && \
+mkdir /mcr-install && \
+cd /mcr-install && \
+wget https://ssd.mathworks.com/supportfiles/downloads/R2018a/deployment_files/R2018a/installers/glnxa64/MCR_R2018a_glnxa64_installer.zip && \
+unzip MCR_R2018a_glnxa64_installer.zip && \
+./install -mode silent -agreeToLicense yes -destinationFolder /opt/mcr && \
+rm -Rf /mcr-install
 
-USER root
+ENV LD_LIBRARY_PATH=/opt/mcr/v94/runtime/glnxa64:/opt/mcr/v94/bin/glnxa64:/opt/mcr/v94/sys/os/glnxa64:/opt/mcr/v94/extern/bin/glnxa64
+ENV XAPPLRESDIR=/usr/share/X11/app-defaults
 
-ENV NIXENV "/root/.nix-profile/etc/profile.d/nix.sh"
-
-RUN mkdir -p /root/.config/nixpkgs/
-
-COPY config.nix /root/.config/nixpkgs/
-COPY dev.nix /root/
-COPY prod-env.nix /root/
-COPY persist-env.sh /root/
-
-RUN for i in $(ls /root/.nix-profile/bin) ; do ln -s /root/.nix-profile/bin/"$i" /usr/bin ; done
-
-RUN chmod +x /root/.nix-profile/etc/profile.d/nix.sh
+ADD mdimensionalArray /mdimensionalArray
+RUN chmod +x mdimensionalArray
 
 # initiate environment
 RUN $NIXENV && \
